@@ -15,9 +15,9 @@ provider:
   region: ${opt:region, 'us-east-1'}
 
   environment:
-    TODOS_TABLE: serverless-prishar-todos-table-${self:provider.stage}
+    TODOS_TABLE: serverless-todos-table-${self:provider.stage}
     INDEX_NAME: UserIdIndex
-    S3_BUCKET: serverless-prishar-${self:provider.stage}
+    S3_BUCKET: serverless-priyanka-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     
 custom:
