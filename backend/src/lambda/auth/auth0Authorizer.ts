@@ -79,13 +79,13 @@ function getToken(authHeader: string): string {
   if (!authHeader.toLowerCase().startsWith('bearer '))
     throw new Error('Invalid authentication header')
   
-    if(authHeader.length!=0)
+  if(authHeader.length!=0)
     {
-  const split = authHeader.split(' ')
-  const token = split[1]
-  return token
+      const split = authHeader.split(' ')
+      const token = split[1]
+      return token
     }
-    else
+  else
     {
       console.log("Something went wrong!")
     }
