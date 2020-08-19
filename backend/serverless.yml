@@ -29,7 +29,11 @@ provider:
     SIGNED_URL_EXPIRATION: 300
 
 
-  iamRoleStatements:            
+  iamRoleStatements:  
+  - Effect: Allow
+    Action:
+      - kms:Decrypt
+    Resource: !GetAtt KMSKey.Arn          
   - Effect: 'Allow'          
     Action:
       - 'xray:PutTraceSegments'             
@@ -244,3 +248,24 @@ resources:
                 - s3:PutObject
               Resource: arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*
         Bucket: !Ref AttachmentBucket
+
+    KMSKey:
+      Type: AWS::KMS::Key
+      Properties:
+        Description: KMS key to encrypt Auth0 secret
+        KeyPolicy:
+          Version: '2012-10-17'
+          Id: key-default-1
+          Statement:
+            - Sid: Allow administration of the key
+              Effect: Allow
+              Principal:
+                AWS:
+                  Fn::Join:
+                  - ':'
+                  - - 'arn:aws:iam:'
+                    - Ref: AWS::AccountId
+                    - 'root'
+              Action:
+                - 'kms:*'
+              Resource: '*'
