@@ -14,7 +14,9 @@ export default class TodosStorage {
         return this.todosStorage;
     }
 
-    getPresignedUploadURL(createSignedUrlRequest: CreateSignedURLRequest) {
-        return this.s3.getSignedUrl('putObject', createSignedUrlRequest);
+     getPresignedUploadURL(createSignedUrlRequest: CreateSignedURLRequest) {
+         console.log("Entering getPresignedUploadURL MEthod")
+        return Promise.resolve(this.s3.getSignedUrl('putObject', createSignedUrlRequest));
     }
+
 }
