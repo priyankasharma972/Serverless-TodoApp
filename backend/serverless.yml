@@ -6,6 +6,9 @@ plugins:
   - serverless-iam-roles-per-function
   - serverless-dynamodb-local
   - serverless-offline
+  - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
+  - serverless-plugin-tracing
 
 provider:
   name: aws
@@ -14,13 +17,38 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
 
+  tracing:
+    lambda: true
+    apiGateway: true
+
+
   environment:
     TODOS_TABLE: serverless-todos-table-${self:provider.stage}
     INDEX_NAME: UserIdIndex
     S3_BUCKET: serverless-priyanka-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
+
+
+  iamRoleStatements:            
+  - Effect: 'Allow'          
+    Action:
+      - 'xray:PutTraceSegments'             
+      - 'xray:PutTelemetryRecords'         
+    Resource:
+      - "*"
     
 custom:
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Serverless Todo App
+        description: Serverless application
+    models:
+      - name: CreateTodoRequest                    
+        contentType: application/json
+        schema: ${file(models/create-todo-request.json)}   # Define the schema to be used.
+
   dynamodb:
     start:
       migrate: true
@@ -41,6 +69,8 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
+          documentation:
+            description: Get the Todo list
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -61,12 +91,18 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
+
+          # reqValidatorName: RequestBodyValidator
+          documentation:
+            description: Create a new todo
+            requestModels:
+              'application/json': CreateTodoRequest
+
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-
 
 
   UpdateTodo:
@@ -77,6 +113,8 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
+          documentation:
+            description: Update a todo item
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -92,6 +130,8 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
+          documentation:
+            description: Delete a todo item
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -108,11 +148,14 @@ functions:
           path: todos/{todoId}/attachment
           cors: true
           authorizer: Auth
+          documentation:
+            description: Generate a signed URL
     iamRoleStatements:
       - Effect: Allow
         Action:
           - s3:PutObject
           - s3:GetObject
+          - '*'
         Resource: arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*
 
 resources:
@@ -156,6 +199,15 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
+
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
 
 
     AttachmentBucket:
